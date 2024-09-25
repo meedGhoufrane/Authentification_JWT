@@ -54,13 +54,11 @@ Set up MongoDB:
 Ensure MongoDB is running locally or provide a valid connection string in the .env file.
 
 Run the application:
-
 bash
 npm start
 (Optional) Run tests:
-
 bash
-npm test
+npm test.
 🛠️ API Endpoints
 User Registration and Authentication
 POST /api/users – Register a new user
@@ -68,8 +66,9 @@ POST /api/auth – Authenticate an existing user
 Role-Based Actions
 Customers: Place orders
 Delivery Drivers: View and update assigned deliveries
-Managers: Manage products, users, and orders
-🎨 Design and Task Management
+Managers: Manage products, users, and orders.
+
+🎨 Design and Task Management:
 Project Design: View the project design on Canva using this [link](https://www.canva.com/design/DAGRxsWEzNk/sFIiFdwxU12B9wsIuxYXWg/edit).
 Task Management: Follow development progress and sprint tasks on Jira using this [link](https://meed-balonces.atlassian.net/jira/software/c/projects/AJ/boards/5?sprintStarted=true).
 🧪 Testing
