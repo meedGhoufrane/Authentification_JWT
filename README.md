@@ -46,15 +46,9 @@ Set up environment variables:
 Create a .env file in the root directory and add the following:
 
 bash
-Copier le code
 MYSQL_HOST=localhost
-DB_URI=URI
-MYSQL_USER=root
-MYSQL_PORT=3306
-MYSQL_PASSWORD=
-JWTPRIVATEKEY=test_jwt_private_key
-SALT=10
-PORT=5000
+DB_URI=mongodb://localhost://
+
 Set up MongoDB:
 
 Ensure MongoDB is running locally or provide a valid connection string in the .env file.
@@ -62,12 +56,10 @@ Ensure MongoDB is running locally or provide a valid connection string in the .e
 Run the application:
 
 bash
-Copier le code
 npm start
 (Optional) Run tests:
 
 bash
-Copier le code
 npm test
 🛠️ API Endpoints
 User Registration and Authentication
@@ -77,3 +69,15 @@ Role-Based Actions
 Customers: Place orders
 Delivery Drivers: View and update assigned deliveries
 Managers: Manage products, users, and orders
+🎨 Design and Task Management
+Project Design: View the project design on Canva using this link.
+Task Management: Follow development progress and sprint tasks on Jira using this link.
+🧪 Testing
+The application uses Jest for testing. You can run the tests by executing:
+
+bash
+npm test
+Make sure MongoDB is running and configured correctly before running the tests.
+
+📜 License
+This project is licensed under the MIT License.
