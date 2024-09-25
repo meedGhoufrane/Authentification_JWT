@@ -70,8 +70,8 @@ Customers: Place orders
 Delivery Drivers: View and update assigned deliveries
 Managers: Manage products, users, and orders
 🎨 Design and Task Management
-Project Design: View the project design on Canva using this link.
-Task Management: Follow development progress and sprint tasks on Jira using this link.
+Project Design: View the project design on Canva using this [link](https://www.canva.com/design/DAGRxsWEzNk/sFIiFdwxU12B9wsIuxYXWg/edit).
+Task Management: Follow development progress and sprint tasks on Jira using this [link](https://meed-balonces.atlassian.net/jira/software/c/projects/AJ/boards/5?sprintStarted=true).
 🧪 Testing
 The application uses Jest for testing. You can run the tests by executing:
 
