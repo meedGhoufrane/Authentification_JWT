@@ -7,7 +7,7 @@ JWT-based authentication with two-factor authentication (2FA).
 Secure user registration with password hashing and salt.
 🛂 Role-Based Access Control
 Customers: Browse and order products.
-Delivery Drivers: View assigned deliveries and update delivery status.
+Delivery Drivers: View assigned deliveries and update delivery status. 
 Managers: Manage users, products, and oversee deliveries.
 🛒 Product Ordering & Delivery Management
 Customers can place orders for home delivery.
