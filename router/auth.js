@@ -1,0 +1,187 @@
+// router/auth.js
+
+const router = require("express").Router();
+const { User } = require("../models/user");
+const bcrypt = require("bcryptjs");
+const Joi = require("joi");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+
+
+router.post("/forgetpassword", async (req, res) => {
+	try {
+	  const { email } = req.body;
+  
+	  const user = await User.findOne({ email });
+	  if (!user) return res.status(404).send({ message: "User not found" });
+  
+	  // Generate password reset token
+	  const resetToken = crypto.randomBytes(32).toString("hex");
+	  user.resetPasswordToken = resetToken;
+	  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
+	  await user.save();
+  
+	  // Send email with password reset token
+	  const transporter = nodemailer.createTransport({
+		service: "Gmail",
+		auth: {
+		  user: process.env.EMAIL,
+		  pass: process.env.EMAIL_PASSWORD,
+		},
+	  });
+  
+	  const mailOptions = {
+		from: process.env.EMAIL,
+		to: user.email,
+		subject: "Password Reset",
+		text: `Click the following link to reset your password: ${process.env.BASE_URL}/resetpassword/${resetToken}`,
+	  };
+  
+	  transporter.sendMail(mailOptions, (error, info) => {
+		if (error) return res.status(500).send({ message: "Error sending email" });
+		res.status(200).send({ message: "Password reset email sent" });
+	  });
+	} catch (error) {
+	  res.status(500).send({ message: "Internal Server Error" });
+	}
+  });
+  
+  module.exports = router;
+
+
+
+  
+
+router.post("/resetpassword/:token", async (req, res) => {
+	try {
+	  const { token } = req.params;
+	  const { password } = req.body;
+  
+	  const user = await User.findOne({
+		resetPasswordToken: token,
+		resetPasswordExpires: { $gt: Date.now() }, // Check if token is still valid
+	  });
+  
+	  if (!user) return res.status(400).send({ message: "Invalid or expired token" });
+  
+	  // Hash new password
+	  const salt = await bcrypt.genSalt(Number(process.env.SALT));
+	  user.password = await bcrypt.hash(password, salt);
+  
+	  // Clear reset token and expiration
+	  user.resetPasswordToken = undefined;
+	  user.resetPasswordExpires = undefined;
+	  await user.save();
+  
+	  res.status(200).send({ message: "Password reset successfully" });
+	} catch (error) {
+	  res.status(500).send({ message: "Internal Server Error" });
+	}
+  });
+  
+  module.exports = router;
+
+  
+// Existing login route
+router.post("/", async (req, res) => {
+	try {		
+		const { error } = validate(req.body);
+		if (error)
+			return res.status(400).send({ message: error.details[0].message });
+
+		const user = await User.findOne({ email: req.body.email });
+		if (!user)
+			return res.status(401).send({ message: "Invalid Email or Password" });
+
+		const validPassword = await bcrypt.compare(req.body.password, user.password);
+		if (!validPassword)
+			return res.status(401).send({ message: "Invalid Email or Password" });
+
+		// Generate and send the 2FA code
+		const twoFACode = crypto.randomInt(100000, 999999).toString();
+		user.twoFACode = twoFACode;
+		user.twoFACodeExpires = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+		await user.save();
+		
+		
+		const transporter = nodemailer.createTransport({
+			host: "smtp.gmail.com",
+			port: 587,
+			secure : false,
+			auth: {
+				user: process.env.EMAIL, // Your email
+				pass: process.env.EMAIL_PASSWORD, // Your email password
+			},
+		});
+		
+		const mailOptions = {
+			from: process.env.EMAIL,
+			to: user.email,
+			subject: "Your 2FA Verification Code",
+			text: `Your verification code is: ${twoFACode}`,
+		};
+		
+		// console.log(process.env.EMAIL);
+		await transporter.sendMail(mailOptions);
+		
+		// Response to the user
+		res.status(200).send({
+			message: "2FA code sent to your email. Please verify to complete login.",
+		});
+	} catch (error) {
+		res.status(500).send({ message: error });
+	}
+});
+
+// Verify 2FA Code route
+router.post("/verify-2fa", async (req, res) => {
+	try {
+		const { email, twoFACode } = req.body;
+
+		// Find the user by email
+		const user = await User.findOne({ email });
+		if (!user) return res.status(401).send({ message: "Invalid email or code" });
+
+		// Check if the 2FA code is valid and not expired
+		if (
+			user.twoFACode !== twoFACode ||
+			user.twoFACodeExpires < Date.now()
+		) {
+			return res.status(401).send({ message: "Invalid or expired 2FA code" });
+		}
+
+		// Generate JWT token upon successful 2FA verification
+		const token = user.generateAuthToken();
+
+		// Clear 2FA code after successful verification
+		user.twoFACode = undefined;
+		user.twoFACodeExpires = undefined;
+		await user.save();
+
+		// Send success response with the token
+		res
+		.cookie("token", token, {
+			httpOnly: true,
+			maxAge: 24 * 60 * 60 * 1000,
+		})
+		.json({ 
+			success:true,
+			code: 200,
+			message: "2FA verification successful, logged in." 
+		});
+
+	} catch (error) {
+		res.status(500).send({ message: "2FA verification successful, logged in." });
+	}
+});
+
+// Validation schema for login
+const validate = (data) => {
+	const schema = Joi.object({
+		email: Joi.string().email().required().label("Email"),
+		password: Joi.string().required().label("Password"),
+	});
+	return schema.validate(data);
+};
+
+module.exports = router;
