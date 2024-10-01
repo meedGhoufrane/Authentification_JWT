@@ -16,7 +16,9 @@ const userSchema = new mongoose.Schema({
 	role: { type: String, enum: ["user", "admin", "manager"], default: "user" },
 	isVerified: { type: Boolean, default: false },  // For email verification status
 	verificationToken: { type: String },  // Store verification token
-	verificationTokenExpires: { type: Date } // Token expiration time
+	verificationTokenExpires: { type: Date }, // Token expiration time
+	twoFACode: {type: String,},
+	twoFACodeExpires: {type: Date,},
 });
 
 // Generate Auth Token with role
