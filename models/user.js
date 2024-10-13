@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
 	resetPasswordToken: { type: String },
 	resetPasswordExpires: { type: Date },
 	adresse: { type: String, required: true },
-	phonenumber: { type: Number, required: true },
+	phonenumber: { type: String, required: true },
 	role: { type: String, enum: ["user", "admin", "manager"], default: "user" },
 	isVerified: { type: Boolean, default: false },  // For email verification status
 	verificationToken: { type: String },  // Store verification token
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
 // Generate Auth Token with role
 userSchema.methods.generateAuthToken = function () {
 	const token = jwt.sign(
-		{ _id: this._id, role: this.role }, // Include role in the token payload
+		{ _id: this._id, role: this.role }, 
 		process.env.JWTPRIVATEKEY,
 		{
 			expiresIn: "7d",
@@ -35,7 +35,6 @@ userSchema.methods.generateAuthToken = function () {
 
 const User = mongoose.model("user", userSchema);
 
-// Validate user creation or update
 const validate = (data) => {
 	const schema = Joi.object({
 		firstName: Joi.string().required(),
@@ -43,8 +42,8 @@ const validate = (data) => {
 		email: Joi.string().email().required().label("Email"),
 		password: passwordComplexity().required().label("Password"),
 		adresse: Joi.string().required().label("Adresse"),
-		phonenumber: Joi.number().required().label("Phone Number"),
-		role: Joi.string().valid("user", "admin", "manager").label("Role") // Validate role
+		phonenumber: Joi.string().required().label("Phone Number"),
+		role: Joi.string().valid("user", "admin", "manager").label("Role") 
 	});
 	return schema.validate(data);
 };

@@ -87,7 +87,7 @@ router.post("/forgetpassword", async (req, res) => {
 			from: process.env.EMAIL,
 			to: user.email,
 			subject: "Password Reset",
-			text: `Click the following link to reset your password: ${process.env.BASE_URL}/auth/resetpassword/${resetToken}`,
+			text: `Click the following link to reset your password: ${process.env.FRONT_URL}/auth/reset-password/${resetToken}`,
 		};
 
 		transporter.sendMail(mailOptions, (error, info) => {
@@ -102,23 +102,20 @@ module.exports = router;
 
 router.post("/resetpassword", async (req, res) => {
 	try {
-		const { token, password } = req.body; // Extract token and password from the request body
+		const { token, password } = req.body; 
 
-		// Find the user with the matching reset token and ensure it hasn't expired
 		const user = await User.findOne({
 			resetPasswordToken: token,
-			resetPasswordExpires: { $gt: Date.now() }, // Check if token is still valid
+			resetPasswordExpires: { $gt: Date.now() }, 
 		});
 
 		if (!user) {
 			return res.status(400).send({ message: "Invalid or expired token" });
 		}
 
-		// Hash the new password
 		const salt = await bcrypt.genSalt(Number(process.env.SALT));
 		user.password = await bcrypt.hash(password, salt);
 
-		// Clear the reset token and its expiration
 		user.resetPasswordToken = undefined;
 		user.resetPasswordExpires = undefined;
 		await user.save();
@@ -134,51 +131,32 @@ module.exports = router;
 // Existing login route
 router.post("/login", async (req, res) => {
 	try {
-		const { email, password } = req.body;
-
-		// Find user by email
-		const user = await User.findOne({ email });
-		if (!user) return res.status(401).send({ message: "Invalid email or password" });
-
-		// Validate password
-		const isPasswordValid = await bcrypt.compare(password, user.password);
-		if (!isPasswordValid) return res.status(401).send({ message: "Invalid email or password" });
-
-		// Generate 2FA code
-		const twoFACode = crypto.randomInt(100000, 999999).toString();
-		user.twoFACode = twoFACode;
-		user.twoFACodeExpires = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
-
-		// Save user with the 2FA code and expiration
-		await user.save(); // This ensures the code is saved in the database
-
-		// Send 2FA code via email
-		const transporter = nodemailer.createTransport({
-			service: "Gmail", // You may need to configure this
-			auth: {
-				user: process.env.EMAIL,
-				pass: process.env.EMAIL_PASSWORD,
-			},
-		});
-
-		const mailOptions = {
-			from: process.env.EMAIL,
-			to: user.email,
-			subject: "Your 2FA Code",
-			text: `Your 2FA verification code is: ${twoFACode}`,
-		};
-
-		await transporter.sendMail(mailOptions);
-
-		res.status(200).send({ message: "2FA code sent to your email." });
+	  const { email, password } = req.body;
+  
+	  // Find user by email
+	  const user = await User.findOne({ email });
+	  if (!user) return res.status(401).send({ message: "Invalid email or password" });
+  
+	  // Check if the user's email is verified
+	  if (!user.isVerified) {
+		return res.status(403).send({ message: "Please verify your email before logging in." });
+	  }
+  
+	  // Validate password
+	  const isPasswordValid = await bcrypt.compare(password, user.password);
+	  if (!isPasswordValid) return res.status(401).send({ message: "Invalid email or password" });
+  
+	  // Login successful, send success response
+	  res.status(200).send({ message: "Login successful!" });
 	} catch (error) {
-		console.error("Error in login route:", error);
-		res.status(500).send({ message: "Internal Server Error" });
+	  console.error("Error in login route:", error);
+	  res.status(500).send({ message: "Internal Server Error" });
 	}
-});
+  });
+  
 
 
-// Verify 2FA Code route
+
 // router.post("/verify-2fa", async (req, res) => {
 // 	try {
 // 		const { email, twoFACode } = req.body;
